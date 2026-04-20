@@ -1,3 +1,12 @@
+## Visual Progress Log
+
+### The Magnetic Displacement Engine
+![Ecosystem Overview](assets/Screenshot 2026-04-21 021304.png) 
+*Note: Make sure the text inside the parentheses ( ) matches your filename exactly. Use %20 for any spaces in the filename.*
+
+### Multi-Agent Stratification
+![Agent Layers](assets/Screenshot 2026-04-21 022803.png)
+
 # PICO Eyes: The Evolutionary Path 🧬🌑
 
 This document tracks the technical and biological growth of the PICO Eyes Ecosystem—the "Pandora" of Earth Intelligence.
