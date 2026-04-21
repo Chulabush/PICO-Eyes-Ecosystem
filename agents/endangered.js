@@ -1,90 +1,124 @@
 import * as THREE from 'three';
 
 export class EndangeredClass {
-    constructor(scene, count = 5) { // Only 5 exist in the world!
+    constructor(scene, count = 5) {
         this.count = count;
-        this.scene = scene;
-        
-        // Cyber-Brutalist Neon Violet for rare, massive agents
-        const material = new THREE.PointsMaterial({
-            color: 0x9D00FF, 
-            size: 5.0, // Massive size to represent "Big Species"
-            transparent: true,
-            opacity: 1.0
-        });
-
-        // Make them perfect spheres
-        const circleCanvas = document.createElement('canvas');
-        circleCanvas.width = 32;
-        circleCanvas.height = 32;
-        const ctx = circleCanvas.getContext('2d');
-        ctx.beginPath();
-        ctx.arc(16, 16, 16, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        material.map = new THREE.CanvasTexture(circleCanvas);
-        material.alphaTest = 0.5;
-
         const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(this.count * 3);
+        const positions = new Float32Array(count * 3);
+
         this.velocities = [];
+        this.energies = [];
+        this.states = [];
+        this.isRecallActive = false;
 
-        // Spawn them at the extreme edges of the ecosystem
-        for (let i = 0; i < this.count * 3; i += 3) {
-            positions[ i ] = (Math.random() > 0.5 ? 1 : -1) * 45; // Far X edge
-            positions[ i + 1 ] = 0;                               // Ground level
-            positions[ i + 2 ] = (Math.random() > 0.5 ? 1 : -1) * 45; // Far Z edge
+        for (let i = 0; i < count; i++) {
+            positions[ i * 3 ] = (Math.random() - 0.5) * 80;
+            positions[ i * 3 + 1 ] = 4; 
+            positions[ i * 3 + 2 ] = (Math.random() - 0.5) * 80;
 
-            this.velocities.push({ x: 0, y: 0, z: 0 });
+            this.velocities.push(new THREE.Vector3(
+                (Math.random() - 0.5) * 0.005,
+                0, 
+                (Math.random() - 0.5) * 0.005
+            ));
+            
+            this.energies.push(Math.random() * 100); 
+            this.states.push("MIGRATING");
         }
 
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const material = new THREE.PointsMaterial({
+            color: 0x9D00FF,
+            size: 4.0, 
+            transparent: true,
+            opacity: 1.0,
+            blending: THREE.AdditiveBlending
+        });
+
         this.points = new THREE.Points(geometry, material);
-        this.scene.add(this.points);
+        scene.add(this.points);
+    }
+
+    setRecallMode(isActive) {
+        this.isRecallActive = isActive;
     }
 
     update() {
         const positions = this.points.geometry.attributes.position.array;
-        
-        const targetX = 0;
-        const targetZ = 0;
-        
+        const centerNode = new THREE.Vector3(0, 4, 0); 
+
         for (let i = 0; i < this.count; i++) {
-            const index = i * 3;
+            const idx = i * 3;
+            const pos = new THREE.Vector3(positions[ idx ], positions[ idx + 1 ], positions[ idx + 2 ]);
+            const vel = this.velocities[ i ];
             
-            let px = positions[ index ];
-            let pz = positions[ index + 2 ];
+            let energy = this.energies[ i ];
+            let state = this.states[ i ];
 
-            let dx = targetX - px;
-            let dz = targetZ - pz;
-            
-            // Calculate distance to the center canopy
-            let dist = Math.sqrt(dx * dx + dz * dz);
+            energy -= 0.01; 
+            vel.multiplyScalar(0.90); // Massive friction for Giants
 
-            if (dist < 15) {
-                // ARRIVED: Start circling the canopy (Orbit Logic)
-                // We use cross-product math to make them turn sideways
-                this.velocities[ i ].x += dz * 0.0001; 
-                this.velocities[ i ].z -= dx * 0.0001;
+            if (this.isRecallActive) {
+                state = "CORE_RESONANCE";
+                energy = 100; 
+            } else if (state === "CORE_RESONANCE") {
+                state = "MIGRATING"; 
             } else {
-                // PILGRIMAGE: Keep walking to the center
-                this.velocities[ i ].x += dx * 0.00005;
-                this.velocities[ i ].z += dz * 0.00005;
+                if (energy < 15) state = "DEEP_SLUMBER"; 
+                if (energy > 85) state = "MIGRATING";
             }
 
-            // Physical speed cap 
-            this.velocities[ i ].x = Math.max(-0.02, Math.min(0.02, this.velocities[ i ].x));
-            this.velocities[ i ].z = Math.max(-0.02, Math.min(0.02, this.velocities[ i ].z));
+            if (state === "MIGRATING") {
+                vel.x += (Math.random() - 0.5) * 0.002;
+                vel.z += (Math.random() - 0.5) * 0.002;
+                if (pos.length() > 60) vel.add(pos.clone().normalize().multiplyScalar(-0.002));
+                pos.y = 4; 
+            } 
+            else if (state === "DEEP_SLUMBER") {
+                vel.multiplyScalar(0.5); 
+                energy += 0.2; 
+                pos.y = 3.5; 
+            } 
+            else if (state === "CORE_RESONANCE") {
+                pos.y = 4; 
+                const dist = pos.distanceTo(centerNode);
+                
+                if (dist > 40) {
+                    // Very slow pull to the outer perimeter
+                    const direction = new THREE.Vector3().subVectors(centerNode, pos).normalize();
+                    vel.add(direction.multiplyScalar(0.005)); 
+                } else {
+                    // Arrived. Slow, majestic wandering on the edge.
+                    vel.x += (Math.random() - 0.5) * 0.01;
+                    vel.z += (Math.random() - 0.5) * 0.01;
+                    
+                    if (dist > 40) {
+                        const pushBack = new THREE.Vector3().subVectors(centerNode, pos).normalize();
+                        vel.add(pushBack.multiplyScalar(0.005));
+                    } else if (dist < 25) {
+                        const pushOut = new THREE.Vector3().subVectors(pos, centerNode).normalize();
+                        vel.add(pushOut.multiplyScalar(0.005));
+                    }
+                }
+            }
 
-            // Move the giant
-            positions[ index ] += this.velocities[ i ].x;
-            positions[ index + 2 ] += this.velocities[ i ].z;
+            // THE FIX: Glacial Speed Limits
+            if (state === "CORE_RESONANCE") {
+                vel.clampLength(0.001, 0.02); 
+            } else {
+                vel.clampLength(0.001, 0.02); 
+            }
+            
+            pos.add(vel);
 
-            // Turn around if they hit the edge of the world
-            if (Math.abs(positions[ index ]) > 50) this.velocities[ i ].x *= -1;
-            if (Math.abs(positions[ index + 2 ]) > 50) this.velocities[ i ].z *= -1;
+            positions[ idx ] = pos.x;
+            positions[ idx + 1 ] = pos.y;
+            positions[ idx + 2 ] = pos.z;
+            
+            this.energies[ i ] = energy;
+            this.states[ i ] = state;
         }
-        
         this.points.geometry.attributes.position.needsUpdate = true;
     }
 }

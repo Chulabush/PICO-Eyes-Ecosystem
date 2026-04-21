@@ -3,87 +3,131 @@ import * as THREE from 'three';
 export class InsectSwarm {
     constructor(scene, count = 500) {
         this.count = count;
-        this.scene = scene;
-        
-        // Neon Amber color for the Bees
-        const material = new THREE.PointsMaterial({
-            color: 0xFFB300, 
-            size: 1.5, // Slightly larger than environment dots
-            transparent: true,
-            opacity: 0.9
-        });
-
         const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(this.count * 3);
+        const positions = new Float32Array(count * 3);
+
         this.velocities = [];
+        this.energies = [];
+        this.states = [];
+        this.isRecallActive = false; 
 
-        // Spawn bees randomly within the ecosystem bounds
-        for (let i = 0; i < this.count * 3; i += 3) {
-            positions[ i ] = (Math.random() - 0.5) * 100;     // X
-            positions[ i + 1 ] = Math.random() * 40;          // Y
-            positions[ i + 2 ] = (Math.random() - 0.5) * 100; // Z
+        for (let i = 0; i < count; i++) {
+            positions[ i * 3 ] = (Math.random() - 0.5) * 100;
+            positions[ i * 3 + 1 ] = Math.random() * 40 + 10;
+            positions[ i * 3 + 2 ] = (Math.random() - 0.5) * 100;
 
-            // Give each bee a random flying speed/direction
-            this.velocities.push({
-                x: (Math.random() - 0.5) * 0.2,
-                y: (Math.random() - 0.5) * 0.2,
-                z: (Math.random() - 0.5) * 0.2
-            });
+            // ORIGINAL INITIAL VELOCITY RESTORED
+            this.velocities.push(new THREE.Vector3(
+                (Math.random() - 0.5) * 0.5,
+                (Math.random() - 0.5) * 0.5,
+                (Math.random() - 0.5) * 0.5
+            ));
+            
+            this.energies.push(Math.random() * 100); 
+            this.states.push("EXPLORING_PERIMETER");
         }
 
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const material = new THREE.PointsMaterial({
+            color: 0xFFB300,
+            size: 0.8,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
         this.points = new THREE.Points(geometry, material);
-        this.scene.add(this.points);
+        scene.add(this.points);
     }
 
-    // This updates their position every single frame
+    setRecallMode(isActive) {
+        this.isRecallActive = isActive;
+    }
+
     update() {
         const positions = this.points.geometry.attributes.position.array;
-        
-        // The Carbon Canopy is located at Center (0, 20, 0)
-        const targetX = 0;
-        const targetY = 20;
-        const targetZ = 0;
-        
+        const centerOfCanopy = new THREE.Vector3(0, 20, 0); 
+
         for (let i = 0; i < this.count; i++) {
-            const index = i * 3;
+            const idx = i * 3;
+            const pos = new THREE.Vector3(positions[ idx ], positions[ idx + 1 ], positions[ idx + 2 ]);
+            const vel = this.velocities[ i ];
             
-            // Get current position
-            let px = positions[ index ];
-            let py = positions[ index + 1 ];
-            let pz = positions[ index + 2 ];
+            let energy = this.energies[ i ];
+            let state = this.states[ i ];
 
-            // 1. FORAGING LOGIC: Calculate direction to the canopy
-            let dx = targetX - px;
-            let dy = targetY - py;
-            let dz = targetZ - pz;
+            energy -= 0.15;
 
-            // Apply a tiny attraction force towards the green dots
-            this.velocities[ i ].x += dx * 0.001;
-            this.velocities[ i ].y += dy * 0.001;
-            this.velocities[ i ].z += dz * 0.001;
+            if (this.isRecallActive) {
+                state = "CORE_RESONANCE";
+                energy = 100; 
+            } else if (state === "CORE_RESONANCE") {
+                state = "EXPLORING_PERIMETER"; 
+            } else {
+                if (energy < 30) state = "CRITICAL_SEEK_NECTAR";
+                if (energy > 95) state = "EXPLORING_PERIMETER";
+            }
 
-            // 2. BIOLOGICAL WOBBLE: Add random "buzzing" movement
-            this.velocities[ i ].x += (Math.random() - 0.5) * 0.05;
-            this.velocities[ i ].y += (Math.random() - 0.5) * 0.05;
-            this.velocities[ i ].z += (Math.random() - 0.5) * 0.05;
+            // --- ORIGINAL LIVELY PATROL MATH RESTORED ---
+            if (state === "EXPLORING_PERIMETER") {
+                vel.x += (Math.random() - 0.5) * 0.1;
+                vel.y += (Math.random() - 0.5) * 0.1;
+                vel.z += (Math.random() - 0.5) * 0.1;
+                if (pos.length() > 60) vel.add(pos.clone().normalize().multiplyScalar(-0.05));
+            } 
+            else if (state === "CRITICAL_SEEK_NECTAR") {
+                const directionToFood = new THREE.Vector3().subVectors(centerOfCanopy, pos).normalize();
+                vel.add(directionToFood.multiplyScalar(0.08));
+                if (pos.distanceTo(centerOfCanopy) < 15) energy += 2.5; 
+            } 
+            else if (state === "CORE_RESONANCE") {
+                const dist = pos.distanceTo(centerOfCanopy);
+                
+                if (dist > 15) {
+                    // Fast flight toward the tree
+                    const direction = new THREE.Vector3().subVectors(centerOfCanopy, pos).normalize();
+                    vel.add(direction.multiplyScalar(0.15)); 
+                } else {
+                    // TRUE BEEHIVE SWARM LOGIC (No orbits, no stacking)
+                    
+                    // 1. Extreme chaotic darting inside the swarm cloud
+                    vel.x += (Math.random() - 0.5) * 0.4;
+                    vel.y += (Math.random() - 0.5) * 0.4;
+                    vel.z += (Math.random() - 0.5) * 0.4;
+                    
+                    // 2. The Outer Wall: Don't wander away from the hive
+                    if (dist > 12) {
+                        const pushBack = new THREE.Vector3().subVectors(centerOfCanopy, pos).normalize();
+                        vel.add(pushBack.multiplyScalar(0.1));
+                    }
+                    
+                    // 3. The Inner Wall (Anti-Stacking): Push out if they hit the dead center
+                    if (dist < 4) {
+                        const pushOut = new THREE.Vector3().subVectors(pos, centerOfCanopy).normalize();
+                        vel.add(pushOut.multiplyScalar(0.15));
+                    }
+                }
+            }
 
-            // 3. PHYSICAL LIMITS: Cap their max speed
-            this.velocities[ i ].x = Math.max(-0.3, Math.min(0.3, this.velocities[ i ].x));
-            this.velocities[ i ].y = Math.max(-0.3, Math.min(0.3, this.velocities[ i ].y));
-            this.velocities[ i ].z = Math.max(-0.3, Math.min(0.3, this.velocities[ i ].z));
+            // --- ORIGINAL TOP SPEEDS RESTORED ---
+            if (state === "CORE_RESONANCE") {
+                vel.clampLength(0.1, 1.2); // Fast darting during swarm
+            } else {
+                vel.clampLength(0.1, 0.8); // Original fast patrol speed
+            }
+            
+            pos.add(vel);
+            if (pos.y < 2) pos.y = 2;
 
-            // Move the bee
-            positions[ index ] += this.velocities[ i ].x;
-            positions[ index + 1 ] += this.velocities[ i ].y;
-            positions[ index + 2 ] += this.velocities[ i ].z;
-
-            // Keep them inside the world boundaries (Bounce back)
-            if (Math.abs(positions[ index ]) > 50) this.velocities[ i ].x *= -1;
-            if (positions[ index + 1 ] > 50 || positions[ index + 1 ] < 0) this.velocities[ i ].y *= -1;
-            if (Math.abs(positions[ index + 2 ]) > 50) this.velocities[ i ].z *= -1;
+            positions[ idx ] = pos.x;
+            positions[ idx + 1 ] = pos.y;
+            positions[ idx + 2 ] = pos.z;
+            
+            this.energies[ i ] = energy;
+            this.states[ i ] = state;
         }
-        
+
         this.points.geometry.attributes.position.needsUpdate = true;
     }
 }

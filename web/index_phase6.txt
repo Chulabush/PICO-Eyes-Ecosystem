@@ -5,21 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PICO Eyes | Pandora Seed</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #05050A; font-family: 'Courier New', Courier, monospace; }
-        #ui-layer { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        h1 { color: #00FFFF; font-size: 24px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px #00FFFF; }
-        p { margin: 0 0 5px 0; font-size: 14px; color: #57FF14; }
-        .control-group-title { margin-top: 20px; margin-bottom: 8px; font-size: 12px; color: #FFFFFF; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 4px; display: inline-block; }
-        canvas { display: block; }
-        .ui-btn { background: transparent; padding: 8px 16px; font-family: 'Courier New', Courier, monospace; font-size: 12px; cursor: pointer; text-transform: uppercase; transition: 0.2s; pointer-events: auto; margin-right: 8px; margin-bottom: 8px; display: inline-block; border: 1px solid; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #05050A; 
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        h1 {
+            color: #00FFFF;
+            font-size: 24px;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #00FFFF;
+        }
+        p {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            color: #57FF14; 
+        }
+        .control-group-title {
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #FFFFFF;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 4px;
+            display: inline-block;
+        }
+        canvas {
+            display: block;
+        }
+        .ui-btn {
+            background: transparent;
+            padding: 8px 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+            pointer-events: auto; 
+            margin-right: 8px; 
+            margin-bottom: 8px;
+            display: inline-block;
+            border: 1px solid;
+        }
         
-        #hud-layer { position: absolute; bottom: 30px; right: 30px; width: 320px; background: rgba(5, 5, 10, 0.7); border: 1px solid #00FFFF; padding: 20px; color: #00FFFF; font-family: 'Courier New', Courier, monospace; z-index: 20; display: none; box-shadow: 0 0 20px rgba(0, 255, 255, 0.15); backdrop-filter: blur(5px); }
-        #hud-header { font-size: 16px; font-weight: bold; border-bottom: 1px solid #00FFFF; margin-bottom: 15px; padding-bottom: 8px; letter-spacing: 2px; text-shadow: 0 0 8px currentColor; }
-        .hud-row { font-size: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .hud-label { opacity: 0.6; letter-spacing: 1px; }
-        .hud-value { font-weight: bold; text-shadow: 0 0 8px currentColor; }
-        .hud-scanline { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: rgba(255, 255, 255, 0.1); animation: scan 3s linear infinite; pointer-events: none; }
-        .blinking-cursor { display: inline-block; width: 8px; height: 14px; background-color: currentColor; margin-left: 5px; animation: blink 1s step-end infinite; }
+        #hud-layer {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 320px;
+            background: rgba(5, 5, 10, 0.7);
+            border: 1px solid #00FFFF;
+            padding: 20px;
+            color: #00FFFF;
+            font-family: 'Courier New', Courier, monospace;
+            z-index: 20;
+            display: none; 
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+        }
+        #hud-header {
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 1px solid #00FFFF;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px currentColor;
+        }
+        .hud-row {
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hud-label { 
+            opacity: 0.6; 
+            letter-spacing: 1px;
+        }
+        .hud-value { 
+            font-weight: bold; 
+            text-shadow: 0 0 8px currentColor;
+        }
+        .hud-scanline {
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            animation: scan 3s linear infinite;
+            pointer-events: none;
+        }
+        .blinking-cursor {
+            display: inline-block;
+            width: 8px; height: 14px;
+            background-color: currentColor;
+            margin-left: 5px;
+            animation: blink 1s step-end infinite;
+        }
         @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
         @keyframes blink { 50% { opacity: 0; } }
     </style>
@@ -38,30 +130,41 @@
         <button id="lens-giant" class="ui-btn" style="color: #9D00FF; border-color: #9D00FF;">[ ENDANGERED (SONAR) ]</button>
         
         <br>
+        
         <div class="control-group-title">2. CAMERA PERSPECTIVE</div><br>
         <button id="cam-god" class="ui-btn" style="color: #FFFFFF; border-color: #FFFFFF;">[ GOD CAMERA (FREE) ]</button> 
         <button id="cam-tether" class="ui-btn" style="color: #888888; border-color: #888888;">[ TETHER TO AGENT ]</button>
 
         <br>
+        
         <div class="control-group-title">3. ACOUSTIC ECOLOGY</div><br>
         <button id="btn-audio" class="ui-btn" style="color: #57FF14; border-color: #57FF14; animation: blink 1s step-end infinite;">[ INITIALIZE AUDIO SYNTH ]</button>
-
-        <br>
-        <div class="control-group-title">4. SYSTEM OVERRIDES</div><br>
-        <button id="btn-recall" class="ui-btn" style="color: #FFB300; border-color: #FFB300; animation: blink 1s step-end infinite;">[ GENESIS RECALL: OFFLINE ]</button>
     </div>
 
     <div id="hud-layer">
         <div class="hud-scanline"></div>
         <div id="hud-header" style="color: #00FFFF; border-color: #00FFFF;">NEURAL SYNC ESTABLISHED</div>
         
-        <div class="hud-row"><span class="hud-label">HOST_ID:</span><span id="hud-id" class="hud-value" style="color: #00FFFF;">--</span></div>
-        <div class="hud-row"><span class="hud-label">ENERGY_LEVEL:</span><span class="hud-value" style="color: #FFFFFF;"><span id="hud-nrg">100</span> <span style="font-size: 10px; opacity:0.5;">%</span></span></div>
-        <div class="hud-row"><span class="hud-label">ALTITUDE:</span><span class="hud-value" style="color: #FFFFFF;"><span id="hud-alt">0.00</span> <span style="font-size: 10px; opacity:0.5;">U</span></span></div>
-        <div class="hud-row"><span class="hud-label">VELOCITY:</span><span class="hud-value" style="color: #FFFFFF;"><span id="hud-vel">0.00</span> <span style="font-size: 10px; opacity:0.5;">U/S</span></span></div>
-        <div class="hud-row"><span class="hud-label">IMPERATIVE:</span><span class="hud-value"><span id="hud-status" style="color: #00FFFF;">--</span><span class="blinking-cursor"></span></span></div>
+        <div class="hud-row">
+            <span class="hud-label">HOST_ID:</span> 
+            <span id="hud-id" class="hud-value" style="color: #00FFFF;">--</span>
+        </div>
+        <div class="hud-row">
+            <span class="hud-label">ALTITUDE:</span> 
+            <span class="hud-value" style="color: #FFFFFF;"><span id="hud-alt">0.00</span> <span style="font-size: 10px; opacity:0.5;">U</span></span>
+        </div>
+        <div class="hud-row">
+            <span class="hud-label">VELOCITY:</span> 
+            <span class="hud-value" style="color: #FFFFFF;"><span id="hud-vel">0.00</span> <span style="font-size: 10px; opacity:0.5;">U/S</span></span>
+        </div>
+        <div class="hud-row">
+            <span class="hud-label">IMPERATIVE:</span> 
+            <span class="hud-value"><span id="hud-status" style="color: #00FFFF;">--</span><span class="blinking-cursor"></span></span>
+        </div>
         
-        <div class="hud-row" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; font-size: 10px;"><span style="color: #FF0055;">> HOST_OVERRIDE_LOCKED</span></div>
+        <div class="hud-row" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; font-size: 10px;">
+            <span style="color: #FF0055;">> HOST_OVERRIDE_LOCKED</span>
+        </div>
     </div>
 
     <script type="importmap">
@@ -104,6 +207,7 @@
 
         renderer.domElement.addEventListener('wheel', (event) => {
             if (cameraMode === "tethered" && activeLens !== "human") return; 
+            
             event.preventDefault(); 
             const direction = new THREE.Vector3().subVectors(camera.position, controls.target);
             let currentDistance = direction.length();
@@ -119,8 +223,10 @@
         let humanMaterial; 
         let environmentPoints;
         let originalEnvPositions;
+        
         let isTethered = false;
         let previousAgentPos = new THREE.Vector3();
+
         const clock = new THREE.Clock(); 
 
         const beeMaterial = createBeeVisionMaterial();
@@ -131,14 +237,16 @@
         const groundSwarm = new TerrestrialClass(scene, 150);
         const giantSwarm = new EndangeredClass(scene, 5); 
 
+        // --- PHASE 6: PROCEDURAL AUDIO ENGINE ---
         let audioCtx, masterGain, beeGain, groundGain;
         let audioInitialized = false;
-        let audioMuted = false; 
+        let audioMuted = false; // THE FIX: New Mute Flag
         let lastPingTime = 0;
 
         const btnAudio = document.getElementById('btn-audio');
         btnAudio.addEventListener('click', () => {
             if (!audioInitialized) {
+                // 1. Initialize for the first time
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 masterGain = audioCtx.createGain();
                 masterGain.connect(audioCtx.destination);
@@ -168,15 +276,17 @@
                 btnAudio.style.animation = "none";
                 btnAudio.style.color = "#FFFFFF";
                 btnAudio.style.borderColor = "#FFFFFF";
+                btnAudio.style.opacity = "0.8";
             } else {
+                // 2. THE FIX: Toggle Mute state
                 audioMuted = !audioMuted;
                 if (audioMuted) {
-                    audioCtx.suspend(); 
+                    audioCtx.suspend(); // Completely freeze the audio thread
                     btnAudio.innerText = "[ AUDIO SYSTEM: MUTED ]";
                     btnAudio.style.color = "#888888";
                     btnAudio.style.borderColor = "#888888";
                 } else {
-                    audioCtx.resume(); 
+                    audioCtx.resume(); // Wake it back up
                     btnAudio.innerText = "[ AUDIO SYSTEM: ONLINE ]";
                     btnAudio.style.color = "#FFFFFF";
                     btnAudio.style.borderColor = "#FFFFFF";
@@ -189,55 +299,25 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
+            
             osc.frequency.setValueAtTime(800, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.5);
+            
             gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.0);
+            
             osc.connect(gain);
             gain.connect(masterGain);
             osc.start();
             osc.stop(audioCtx.currentTime + 1.0);
         }
 
-        // --- CONTEXT-AWARE RECALL LOGIC ---
-        let recallActive = false;
-        const btnRecall = document.getElementById('btn-recall');
-        
-        function updateRecallTargets() {
-            if (!recallActive) {
-                // If it's offline, shut everyone down
-                beeSwarm.setRecallMode(false);
-                groundSwarm.setRecallMode(false);
-                giantSwarm.setRecallMode(false);
-                return;
-            }
-            // If it's online, ONLY call the ones we are currently looking at
-            beeSwarm.setRecallMode(activeLens === "human" || activeLens === "bee");
-            groundSwarm.setRecallMode(activeLens === "human" || activeLens === "terrestrial");
-            giantSwarm.setRecallMode(activeLens === "human" || activeLens === "giant");
-        }
-
-        btnRecall.addEventListener('click', () => {
-            recallActive = !recallActive;
-            updateRecallTargets();
-            
-            if (recallActive) {
-                btnRecall.innerText = "[ GENESIS RECALL: ONLINE ]";
-                btnRecall.style.color = "#FFFFFF";
-                btnRecall.style.borderColor = "#FFFFFF";
-                btnRecall.style.animation = "none";
-            } else {
-                btnRecall.innerText = "[ GENESIS RECALL: OFFLINE ]";
-                btnRecall.style.color = "#FFB300";
-                btnRecall.style.borderColor = "#FFB300";
-                btnRecall.style.animation = "blink 1s step-end infinite";
-            }
-        });
-
+        // --- UI & HUD LOGIC ---
         const btnLensHuman = document.getElementById('lens-human');
         const btnLensBee = document.getElementById('lens-bee');
         const btnLensGround = document.getElementById('lens-ground');
         const btnLensGiant = document.getElementById('lens-giant');
+        
         const btnCamGod = document.getElementById('cam-god');
         const btnCamTether = document.getElementById('cam-tether');
 
@@ -247,7 +327,6 @@
         const hudAlt = document.getElementById('hud-alt');
         const hudVel = document.getElementById('hud-vel');
         const hudStatus = document.getElementById('hud-status');
-        const hudNrg = document.getElementById('hud-nrg'); 
 
         function updateUI() {
             btnLensHuman.style.background = "transparent"; btnLensHuman.style.color = "#00FFFF";
@@ -268,6 +347,7 @@
 
             if (cameraMode === "tethered") {
                 hudLayer.style.display = "block";
+                
                 let themeColor = "#00FFFF"; 
                 if(activeLens === "bee") themeColor = "#FFB300";
                 if(activeLens === "terrestrial") themeColor = "#FF0055";
@@ -279,6 +359,20 @@
                 hudHeader.style.borderBottomColor = themeColor;
                 hudId.style.color = themeColor;
                 hudStatus.style.color = themeColor;
+
+                if(activeLens === "human") {
+                    hudId.innerText = "OBSERVER_GHOST";
+                    hudStatus.innerText = "ECOLOGICAL_SURVEY";
+                } else if(activeLens === "bee") {
+                    hudId.innerText = "INSECT_UNIT_001";
+                    hudStatus.innerText = "SEEKING_NECTAR";
+                } else if(activeLens === "terrestrial") {
+                    hudId.innerText = "SCAVENGER_UNIT_001";
+                    hudStatus.innerText = "THERMAL_SCANNING";
+                } else if(activeLens === "giant") {
+                    hudId.innerText = "PILGRIM_PRIME";
+                    hudStatus.innerText = "ECHOLOCATION_PULSE";
+                }
             } else {
                 hudLayer.style.display = "none";
             }
@@ -301,9 +395,6 @@
             if(activeLens === "terrestrial") environmentPoints.material = terrestrialMaterial;
             if(activeLens === "giant") environmentPoints.material = giantMaterial;
             updateUI();
-            
-            // If we swap lenses while recall is active, update who is being recalled!
-            updateRecallTargets(); 
         }
 
         btnLensHuman.addEventListener('click', () => { activeLens = "human"; applyLens(); });
@@ -362,6 +453,7 @@
                     const targetVol = Math.max(0.001, 0.2 - (dist / 750)); 
                     beeGain.gain.setTargetAtTime(targetVol, audioCtx.currentTime, 0.1);
                 }
+
                 if (activeLens === 'giant') {
                     if (elapsedTime - lastPingTime > 2.5) {
                         triggerSonarPing();
@@ -381,31 +473,15 @@
                         2.0, 
                         Math.sin(elapsedTime * walkSpeed) * walkRadius
                     );
-                    
-                    hudId.innerText = "OBSERVER_GHOST";
-                    hudStatus.innerText = "ECOLOGICAL_SURVEY";
-                    hudNrg.innerText = "---";
-                    
                 } else {
                     let swarmArray;
-                    
                     if (activeLens === "terrestrial") {
                         swarmArray = groundSwarm.points.geometry.attributes.position.array;
-                        hudId.innerText = "SCAVENGER_UNIT_001";
-                        hudStatus.innerText = groundSwarm.states[ 0 ]; 
-                        hudNrg.innerText = Math.max(0, Math.floor(groundSwarm.energies[ 0 ])); 
                     } else if (activeLens === "giant") {
                         swarmArray = giantSwarm.points.geometry.attributes.position.array;
-                        hudId.innerText = "PILGRIM_PRIME";
-                        hudStatus.innerText = giantSwarm.states[ 0 ]; 
-                        hudNrg.innerText = Math.max(0, Math.floor(giantSwarm.energies[ 0 ])); 
                     } else { 
                         swarmArray = beeSwarm.points.geometry.attributes.position.array;
-                        hudId.innerText = "INSECT_UNIT_001";
-                        hudStatus.innerText = beeSwarm.states[ 0 ]; 
-                        hudNrg.innerText = Math.max(0, Math.floor(beeSwarm.energies[ 0 ])); 
                     }
-                    
                     currentAgentPos = new THREE.Vector3(swarmArray[ 0 ], swarmArray[ 1 ], swarmArray[ 2 ]);
                 }
 
@@ -417,14 +493,11 @@
                     const movementDelta = new THREE.Vector3().subVectors(currentAgentPos, previousAgentPos);
                     camera.position.add(movementDelta);
                     controls.target.add(movementDelta);
-                    
                     const speed = movementDelta.length() * 60; 
                     hudAlt.innerText = currentAgentPos.y.toFixed(2);
                     hudVel.innerText = speed.toFixed(2);
                 }
-                
                 previousAgentPos.copy(currentAgentPos);
-                
             } else {
                 isTethered = false;
                 controls.target.lerp(new THREE.Vector3(0, 0, 0), 0.05);
@@ -435,30 +508,23 @@
             if (environmentPoints && giantSwarm) {
                 const envPos = environmentPoints.geometry.attributes.position.array;
                 const giantPos = giantSwarm.points.geometry.attributes.position.array;
-                
                 for(let i = 0; i < envPos.length; i += 3) {
                     let originX = originalEnvPositions[ i ];
                     let originY = originalEnvPositions[ i + 1 ];
                     let originZ = originalEnvPositions[ i + 2 ];
-                    
                     if (originY > 25) continue;
-                    
                     let dx = 0; let dz = 0;
-                    
                     for(let g = 0; g < giantSwarm.count; g++) {
                         let gIndex = g * 3;
                         let gx = giantPos[ gIndex ]; let gz = giantPos[ gIndex + 2 ];
-                        
                         let distSq = (originX - gx)*(originX - gx) + (originZ - gz)*(originZ - gz);
                         let repulseRadius = 8; let radiusSq = repulseRadius * repulseRadius;
-                        
                         if (distSq < radiusSq) {
                             let force = (radiusSq - distSq) / radiusSq; 
                             dx += (originX - gx) * force * 0.3; 
                             dz += (originZ - gz) * force * 0.3; 
                         }
                     }
-                    
                     envPos[ i ] = originX + dx; envPos[ i + 2 ] = originZ + dz;
                 }
                 environmentPoints.geometry.attributes.position.needsUpdate = true;
