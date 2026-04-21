@@ -44,8 +44,32 @@ Upgraded the rendering pipeline from an omniscient God-Camera to a full First-Pe
 * Implemented a mathematical tether that locks the camera's `(x, y, z)` coordinates directly to Agent #001's positional array in real-time.
 * Added a `2.5` Near-Clipping Plane to render the host agent's geometry invisible to the camera, creating a seamless, floating VR experience moving at the exact velocity of the swarm.
 
+![Telemetry HUD](assets/Screenshot%202026-04-22%20010602.png)
+
+## 🎛️ Phase 5: The Cyber-Brutalist Telemetry HUD (Completed)
+* Built a contextual HTML/CSS visor overlay that activates during VR Tethering.
+* Injected live data readouts including Altitude, Velocity, Energy Levels, and internal AI State (Imperative).
+* HUD dynamically restyles its UI and tracking variables based on the biological class currently being observed.
+
+![Acoustic Ecology](assets/Screenshot%202026-04-22%20005328.png)
+
+## 🔊 Phase 6: Acoustic Ecology (Completed)
+* Developed a pure-math Procedural Web Audio Synthesizer (no external audio files).
+* **Insect Class:** Detuned sawtooth waves (120Hz/124Hz) for spatial buzzing based on camera distance.
+* **Terrestrial Class:** Deep 45Hz sine wave low-pass rumble.
+* **Endangered Class:** Exponentially decaying 800Hz-300Hz sonar ping firing every 2.5 seconds.
+
+![Needs-Based AI Brain](assets/Screenshot%202026-04-22%20020653.png)
+
+## 🧠 Phase 7: The Needs-Based AI Brain (Completed)
+* Replaced random wandering with a Biological State Machine.
+* Agents now burn an internal `Energy` parameter per frame.
+* **Asymmetrical Metabolism:** Insects burn energy fast and dive to the canopy; Scavengers burn slower and seek the roots; Giants burn glacially and enter `DEEP_SLUMBER` to recharge.
+* **System Override:** Added the `GENESIS RECALL` toggle. When triggered, agents abandon local imperatives to swarm the central node according to their species-specific physics (Insects form a hollow chaotic sphere, Scavengers swarm the roots, Giants patrol the outer perimeter).
+
 ## 🚀 Future Roadmap
 * [x] **Biomimetic Shaders:** Implementing GLSL code for UV and Thermal vision modes. *(Completed in Phase 3)*
-* [ ] **Phase 5: Telemetry HUD:** Injecting live data overlays (Altitude, Velocity, Biological Imperative) during VR tethers.
-* [ ] **Real-World Injection:** Replacing mathematical "math seeds" with real satellite LiDAR data from CANOPICO.
-* [ ] **Acoustic Ecology:** Adding soundscapes that change based on which eye the user is currently "hopping" through.
+* [x] **Telemetry HUD:** Injecting live data overlays (Altitude, Velocity, Biological Imperative) during VR tethers. *(Completed)*
+* [x] **Acoustic Ecology:** Adding soundscapes that change based on which eye the user is currently "hopping" through. *(Completed in Phase 6)*
+* [ ] **The Cartographic Bridge:** Developing the Data Ingestion Engine to parse complex spatial datasets (GeoJSON/LiDAR).
+* [ ] **Real-World Injection:** Replacing mathematical "math seeds" with live satellite LiDAR data from CANOPICO.
