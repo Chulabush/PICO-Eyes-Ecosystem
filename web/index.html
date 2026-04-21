@@ -15,11 +15,11 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            color: #00FFFF; /* Electric Cyan */
             z-index: 10;
             pointer-events: none;
         }
         h1 {
+            color: #00FFFF;
             font-size: 24px;
             margin: 0 0 10px 0;
             text-transform: uppercase;
@@ -27,12 +27,36 @@
             text-shadow: 0 0 10px #00FFFF;
         }
         p {
-            margin: 0;
+            margin: 0 0 5px 0;
             font-size: 14px;
             color: #57FF14; /* Neon Green */
         }
+        .control-group-title {
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #FFFFFF;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 4px;
+            display: inline-block;
+        }
         canvas {
             display: block;
+        }
+        .ui-btn {
+            background: transparent;
+            padding: 8px 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+            pointer-events: auto; 
+            margin-right: 8px; 
+            margin-bottom: 8px;
+            display: inline-block;
+            border: 1px solid;
         }
     </style>
 </head>
@@ -41,8 +65,19 @@
         <h1>PICO Eyes Ecosystem</h1>
         <p>System: ONLINE</p>
         <p>Rendering: 100,000 Biomimetic Seeds</p>
-        <p>Active Agents: 500 Insect Class</p>
-        <p>Interaction: Left Click to Rotate | Scroll to Zoom</p>
+        <p>Active Agents: 500 Insect | 150 Terrestrial | 5 Endangered</p>
+        
+        <div class="control-group-title">1. OPTICAL LENS (VISION)</div><br>
+        <button id="lens-human" class="ui-btn" style="color: #00FFFF; border-color: #00FFFF;">[ HUMAN ]</button> 
+        <button id="lens-bee" class="ui-btn" style="color: #FFB300; border-color: #FFB300;">[ INSECT (UV) ]</button> 
+        <button id="lens-ground" class="ui-btn" style="color: #FF0055; border-color: #FF0055;">[ TERRESTRIAL (THERMAL) ]</button> 
+        <button id="lens-giant" class="ui-btn" style="color: #9D00FF; border-color: #9D00FF;">[ ENDANGERED (SONAR) ]</button>
+        
+        <br>
+        
+        <div class="control-group-title">2. CAMERA PERSPECTIVE</div><br>
+        <button id="cam-god" class="ui-btn" style="color: #FFFFFF; border-color: #FFFFFF;">[ GOD CAMERA (FREE) ]</button> 
+        <button id="cam-tether" class="ui-btn" style="color: #888888; border-color: #888888;">[ TETHER TO AGENT ]</button>
     </div>
 
     <script type="importmap">
@@ -58,16 +93,20 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
-        
         import { InsectSwarm } from '../agents/swarm.js';
         import { TerrestrialClass } from '../agents/terrestrial.js';
-        import { EndangeredClass } from '../agents/endangered.js'; // <-- ADD THIS
+        import { EndangeredClass } from '../agents/endangered.js'; 
+        import { createBeeVisionMaterial } from '../shaders/beeVision.js';
+        import { createTerrestrialVisionMaterial } from '../shaders/terrestrialVision.js'; 
+        import { createGiantVisionMaterial } from '../shaders/giantVision.js'; 
 
         // 1. Setup Scene, Camera, and Renderer
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x05050A, 0.003);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // THE FIX: Changed the '0.1' to '2.5'. 
+        // The camera will now completely ignore the host agent's body, letting you look right through it!
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 2.5, 1000);
         camera.position.set(0, 30, 80);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -79,46 +118,94 @@
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05; 
-        controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.5;
-        
-        // TURN OFF THE BROKEN DEFAULT ZOOM
+        controls.autoRotate = false; 
         controls.enableZoom = false; 
 
-        // THE NUCLEAR FIX: Custom hardware-agnostic zoom
+        // ZOOM LOGIC
         renderer.domElement.addEventListener('wheel', (event) => {
-            event.preventDefault(); // Stop default browser scrolling behavior
-            
-            // Calculate the distance between the camera and the center
+            if (cameraMode === "tethered") return; // CRITICAL: Disabled completely inside VR mode!
+
+            event.preventDefault(); 
             const direction = new THREE.Vector3().subVectors(camera.position, controls.target);
             let currentDistance = direction.length();
-            
-            // Force the zoom to be exactly 5 units per scroll click
             const zoomAmount = (event.deltaY > 0) ? 5 : -5;
             let newDistance = currentDistance + zoomAmount;
             
-            // Lock the boundaries so you can't get lost in the void
-            newDistance = Math.max(20, Math.min(250, newDistance));
-            
-            // Apply the new smooth position
+            newDistance = Math.max(10, Math.min(250, newDistance)); 
             direction.normalize().multiplyScalar(newDistance);
             camera.position.copy(controls.target).add(direction);
-            
         }, { passive: false });
+
+        // --- STATE VARIABLES ---
+        let activeLens = "human";
+        let cameraMode = "god";
+        let humanMaterial; 
+        let environmentPoints;
+        let originalEnvPositions;
+        
+        let isTethered = false;
+        let previousAgentPos = new THREE.Vector3();
+
+        const clock = new THREE.Clock(); 
+
+        const beeMaterial = createBeeVisionMaterial();
+        const terrestrialMaterial = createTerrestrialVisionMaterial(); 
+        const giantMaterial = createGiantVisionMaterial();
 
         // 3. SPAWN THE AGENTS
         const beeSwarm = new InsectSwarm(scene, 500);
         const groundSwarm = new TerrestrialClass(scene, 150);
-        const giantSwarm = new EndangeredClass(scene, 5); // <-- ADD THIS
+        const giantSwarm = new EndangeredClass(scene, 5); 
 
-        // --- MAGNETIC GRASS VARIABLES ---
-        let environmentPoints;
-        let originalEnvPositions;
+        // --- UI LOGIC ---
+        const btnLensHuman = document.getElementById('lens-human');
+        const btnLensBee = document.getElementById('lens-bee');
+        const btnLensGround = document.getElementById('lens-ground');
+        const btnLensGiant = document.getElementById('lens-giant');
+        
+        const btnCamGod = document.getElementById('cam-god');
+        const btnCamTether = document.getElementById('cam-tether');
+
+        function updateUI() {
+            btnLensHuman.style.background = "transparent"; btnLensHuman.style.color = "#00FFFF";
+            btnLensBee.style.background = "transparent"; btnLensBee.style.color = "#FFB300";
+            btnLensGround.style.background = "transparent"; btnLensGround.style.color = "#FF0055";
+            btnLensGiant.style.background = "transparent"; btnLensGiant.style.color = "#9D00FF";
+
+            if(activeLens === "human") { btnLensHuman.style.background = "#00FFFF"; btnLensHuman.style.color = "#000"; }
+            if(activeLens === "bee") { btnLensBee.style.background = "#FFB300"; btnLensBee.style.color = "#000"; }
+            if(activeLens === "terrestrial") { btnLensGround.style.background = "#FF0055"; btnLensGround.style.color = "#000"; }
+            if(activeLens === "giant") { btnLensGiant.style.background = "#9D00FF"; btnLensGiant.style.color = "#000"; }
+
+            btnCamGod.style.background = "transparent"; btnCamGod.style.color = "#FFFFFF";
+            btnCamTether.style.background = "transparent"; btnCamTether.style.color = "#FFFFFF";
+
+            if(cameraMode === "god") { btnCamGod.style.background = "#FFFFFF"; btnCamGod.style.color = "#000"; }
+            if(cameraMode === "tethered") { btnCamTether.style.background = "#FFFFFF"; btnCamTether.style.color = "#000"; }
+        }
+
+        function applyLens() {
+            if(!environmentPoints) return;
+            if(activeLens === "human") environmentPoints.material = humanMaterial;
+            if(activeLens === "bee") environmentPoints.material = beeMaterial;
+            if(activeLens === "terrestrial") environmentPoints.material = terrestrialMaterial;
+            if(activeLens === "giant") environmentPoints.material = giantMaterial;
+            updateUI();
+        }
+
+        btnLensHuman.addEventListener('click', () => { activeLens = "human"; applyLens(); });
+        btnLensBee.addEventListener('click', () => { activeLens = "bee"; applyLens(); });
+        btnLensGround.addEventListener('click', () => { activeLens = "terrestrial"; applyLens(); });
+        btnLensGiant.addEventListener('click', () => { activeLens = "giant"; applyLens(); });
+
+        btnCamGod.addEventListener('click', () => { cameraMode = "god"; updateUI(); });
+        btnCamTether.addEventListener('click', () => { cameraMode = "tethered"; updateUI(); });
+
+        updateUI();
 
         // 4. Load the Pandora Seed PLY file
         const loader = new PLYLoader();
         loader.load('../seeds/pandora_seed_001.ply', function (geometry) {
-            
             const circleCanvas = document.createElement('canvas');
             circleCanvas.width = 32;
             circleCanvas.height = 32;
@@ -138,59 +225,97 @@
                 alphaTest: 0.5      
             });
 
-            environmentPoints = new THREE.Points(geometry, material);
+            humanMaterial = material; 
+            environmentPoints = new THREE.Points(geometry, humanMaterial);
             scene.add(environmentPoints);
 
-            // SAVE THE ORIGINAL POSITIONS (So grass springs back)
             originalEnvPositions = new Float32Array(geometry.attributes.position.array);
         });
 
         // 5. Animation Loop
         function animate() {
             requestAnimationFrame(animate);
-            controls.update(); 
+            const elapsedTime = clock.getElapsedTime();
             
+            beeMaterial.uniforms.time.value = elapsedTime;
+            terrestrialMaterial.uniforms.time.value = elapsedTime;
+            giantMaterial.uniforms.time.value = elapsedTime;
+
             beeSwarm.update(); 
             groundSwarm.update(); 
             giantSwarm.update(); 
+
+            // --- THE TRUE FIRST-PERSON VR ENGINE ---
+            if (cameraMode === "tethered") {
+                let swarmArray;
+
+                if (activeLens === "terrestrial") {
+                    swarmArray = groundSwarm.points.geometry.attributes.position.array;
+                } else if (activeLens === "giant") {
+                    swarmArray = giantSwarm.points.geometry.attributes.position.array;
+                } else {
+                    swarmArray = beeSwarm.points.geometry.attributes.position.array;
+                }
+
+                const currentAgentPos = new THREE.Vector3(swarmArray[ 0 ], swarmArray[ 1 ], swarmArray[ 2 ]);
+
+                if (!isTethered) {
+                    // 1. Put the camera exactly inside the agent's math center
+                    camera.position.copy(currentAgentPos);
+                    
+                    // 2. Push the invisible target slightly forward so the camera has a direction to look!
+                    controls.target.set(currentAgentPos.x, currentAgentPos.y, currentAgentPos.z - 1);
+                    
+                    isTethered = true;
+                } else {
+                    // 3. Find out exactly how far the agent moved
+                    const movementDelta = new THREE.Vector3().subVectors(currentAgentPos, previousAgentPos);
+                    
+                    // 4. Push BOTH the camera and your focus point forward together
+                    camera.position.add(movementDelta);
+                    controls.target.add(movementDelta);
+                }
+                
+                previousAgentPos.copy(currentAgentPos);
+
+            } else {
+                isTethered = false;
+                controls.target.lerp(new THREE.Vector3(0, 0, 0), 0.05);
+            }
+            
+            controls.update(); 
 
             // --- MAGNETIC DISPLACEMENT ENGINE ---
             if (environmentPoints && giantSwarm) {
                 const envPos = environmentPoints.geometry.attributes.position.array;
                 const giantPos = giantSwarm.points.geometry.attributes.position.array;
                 
-                // Loop through all 100,000 environment dots
                 for(let i = 0; i < envPos.length; i += 3) {
                     let originX = originalEnvPositions[ i ];
                     let originY = originalEnvPositions[ i + 1 ];
                     let originZ = originalEnvPositions[ i + 2 ];
 
-                    // Skip the high atmosphere (gas doesn't get magnetically pushed)
                     if (originY > 25) continue;
 
                     let dx = 0;
                     let dz = 0;
 
-                    // Check distance to the 5 massive Giants
                     for(let g = 0; g < giantSwarm.count; g++) {
                         let gIndex = g * 3;
                         let gx = giantPos[ gIndex ];
                         let gz = giantPos[ gIndex + 2 ];
 
-                        // Calculate distance squared (faster than Math.sqrt)
                         let distSq = (originX - gx)*(originX - gx) + (originZ - gz)*(originZ - gz);
-                        let repulseRadius = 8; // Size of the magnetic footprint
+                        let repulseRadius = 8; 
                         let radiusSq = repulseRadius * repulseRadius;
 
-                        // If the dot is inside the giant's magnetic footprint, push it away!
                         if (distSq < radiusSq) {
                             let force = (radiusSq - distSq) / radiusSq; 
-                            dx += (originX - gx) * force * 0.3; // Push X
-                            dz += (originZ - gz) * force * 0.3; // Push Z
+                            dx += (originX - gx) * force * 0.3; 
+                            dz += (originZ - gz) * force * 0.3; 
                         }
                     }
 
-                    // Apply the push, or spring back to original position
                     envPos[ i ] = originX + dx;
                     envPos[ i + 2 ] = originZ + dz;
                 }
