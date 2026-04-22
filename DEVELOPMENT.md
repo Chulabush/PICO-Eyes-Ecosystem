@@ -1,6 +1,6 @@
 # PICO Eyes: The Evolutionary Path 🧬🌑
 
-This document tracks the technical and biological growth of the PICO Eyes Ecosystem—the "Pandora" of Earth Intelligence.
+This document tracks the technical and biological growth of the PICO Eyes Ecosystem—the "Pandora" of Earth Intelligence. 
 
 ![Ecosystem Overview](assets/Screenshot%202026-04-21%20021304.png)
 
@@ -67,9 +67,33 @@ Upgraded the rendering pipeline from an omniscient God-Camera to a full First-Pe
 * **Asymmetrical Metabolism:** Insects burn energy fast and dive to the canopy; Scavengers burn slower and seek the roots; Giants burn glacially and enter `DEEP_SLUMBER` to recharge.
 * **System Override:** Added the `GENESIS RECALL` toggle. When triggered, agents abandon local imperatives to swarm the central node according to their species-specific physics (Insects form a hollow chaotic sphere, Scavengers swarm the roots, Giants patrol the outer perimeter).
 
-## 🚀 Future Roadmap
-* [x] **Biomimetic Shaders:** Implementing GLSL code for UV and Thermal vision modes. *(Completed in Phase 3)*
-* [x] **Telemetry HUD:** Injecting live data overlays (Altitude, Velocity, Biological Imperative) during VR tethers. *(Completed)*
-* [x] **Acoustic Ecology:** Adding soundscapes that change based on which eye the user is currently "hopping" through. *(Completed in Phase 6)*
-* [ ] **The Cartographic Bridge:** Developing the Data Ingestion Engine to parse complex spatial datasets (GeoJSON/LiDAR).
-* [ ] **Real-World Injection:** Replacing mathematical "math seeds" with live satellite LiDAR data from CANOPICO.
+![Cartographic Bridge](assets/Screenshot%202026-04-22%20224140.png)
+
+## 🌍 Phase 8: The Cartographic Bridge (Completed)
+Transitioned the ecosystem from a closed-loop synthetic environment into a live geospatial intelligence engine capable of reading real Earth data.
+* **The Normalizer:** Built a custom data ingestion class (`bridge.js`) to parse heavy GeoJSON and LiDAR arrays containing raw Latitude, Longitude, Altitude, and Carbon Density telemetry.
+* **Mathematical Shift:** The engine calculates the geographic center of incoming datasets, dynamically shifting real-world coordinates to our `(0,0,0)` WebGL core while applying a compression scale factor for high-density point-cloud rendering.
+* **Payload Stress Test:** Successfully processed, projected, and navigated a 10,000-point real-world topographical payload (complete with varying strata and river valleys) at a stable 60 FPS.
+
+![Satellite Downlink](assets/Screenshot%202026-04-22%20230235.png)
+
+## 📡 Phase 9: The Satellite Downlink (Completed)
+Elevated the architecture from a visualization tool into an actionable Sovereign Command instrument by granting the AI brains true Geospatial Awareness.
+* **Dynamic Biomimetic Scanning:** Agents no longer rely on hardcoded targets. They autonomously scan the incoming topographical array. Bees calculate and hunt the highest critical carbon nodes; Scavengers seek the lowest watershed altitudes.
+* **Reverse Cartographic Projection:** Implemented a live UI Data Terminal. When a user tethers to an agent, the engine reverses the WebGL scaling math, extracting and printing the exact real-world Latitude, Longitude, and Altitude of the environmental anomalies the agent is currently investigating. 
+
+---
+
+## 🚀 Future Roadmap: The Road to 2030 Deployment
+
+### **Core Systems Architecture**
+* [ x ] **Biomimetic Shaders:** Implementing GLSL code for UV and Thermal vision modes. *(Completed in Phase 3)*
+* [ x ] **Telemetry HUD:** Injecting live data overlays (Altitude, Velocity, Biological Imperative) during VR tethers. *(Completed in Phase 5)*
+* [ x ] **Acoustic Ecology:** Adding procedural soundscapes based on active biomimetic lenses. *(Completed in Phase 6)*
+* [ x ] **The Cartographic Bridge:** Developing the Data Ingestion Engine to parse complex spatial datasets. *(Completed in Phase 8)*
+* [ x ] **Real-World Extraction:** Implementing Reverse Projection for live telemetry extraction. *(Completed in Phase 9)*
+
+### **Next Horizons (Phase 10 - 12)**
+* [ ] **Phase 10: The Live API Injector:** Upgrading the `CartographicBridge` to bypass local JSON files and actively ping live external API endpoints (e.g., AWS Open Data, NASA telemetry) to stream fresh environmental snapshots into the ecosystem.
+* [ ] **Phase 11: Autonomous Anomaly Alerts:** Programming the biological state machines to mathematically recognize sudden data discrepancies (e.g., a high-altitude carbon node vanishing overnight due to illegal logging) and trigger a red-state alert protocol in the Downlink Terminal.
+* [ ] **Phase 12: Sovereign Command Interface:** Developing the multi-user architecture required for the 2030 constellation deployment, allowing remote operators to assign specific geographic monitoring zones to distinct swarms.
